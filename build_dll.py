@@ -1,5 +1,4 @@
-# language: Python, file: build_dlls.py
-# run once on dev box to produce dlls/*.dll for the Nuitka build
+
 import os
 import shutil
 import subprocess
