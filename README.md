@@ -365,9 +365,82 @@ out/
 
 <br>
 
-**SmartScreen** — "Windows protected your PC." Click **More info** → **Run anyway**. To suppress: right-click exe → **Properties** → **Unblock** → **OK**.
+**Why this happens.** Windows tags every browser download with a **Mark of the Web (MOTW)**. When the exe is unsigned — which this one is — SmartScreen blocks it on first launch with *"Windows protected your PC."* The binary is fine; Windows just doesn't recognise the publisher.
 
-**Antivirus quarantine** — credential extraction is a high-signal shape. Defender may flag it as `Trojan:Win32/Wacatac`. This is a false positive on behavior pattern, not a real detection. Verify the SHA-256 against the release, then add the folder to your exclusion list. Never disable Defender globally.
+Four ways to run it. **Option B** is the cleanest.
+
+<br>
+
+**⚡ Option A — `Unblock-File` (recommended)**
+
+The fastest fix. Strips the MOTW tag so SmartScreen never fires again for this file.
+
+Open PowerShell in the folder where you downloaded the exe:
+
+```powershell
+Unblock-File .\phantom_elevator.exe
+.\phantom_elevator.exe
+```
+
+Or right-click the exe → **Properties** → on the General tab, tick **Unblock** → **Apply** → **OK**.
+
+> ⚠️ **If you downloaded a `.zip`**, unblock the `.zip` **first**, then extract. Otherwise every extracted file inherits the MOTW flag and you'll be unblocking them one at a time. Same trick: right-click zip → Properties → Unblock → then extract.
+
+<br>
+
+**🖥️ Option B — Run from an elevated Command Prompt**
+
+Bypasses the standard-user SmartScreen gate in most cases. Open **Terminal (Admin)** from the Win+X menu, then run the full path in quotes:
+
+```cmd
+"C:\Users\You\Downloads\phantom_elevator.exe"
+```
+
+Or with flags:
+
+```cmd
+"C:\Users\You\Downloads\phantom_elevator.exe" --force-kill
+"C:\Users\You\Downloads\phantom_elevator.exe" -t chrome --cookies
+```
+
+Because the process starts with elevated integrity, Windows treats it as a user-initiated action rather than a suspicious double-click. The tool itself doesn't need admin rights for normal extraction — but launching through an elevated prompt does get past the initial SmartScreen dialog.
+
+<br>
+
+**🖱️ Option C — Run anyway (GUI)**
+
+The simplest path. When SmartScreen fires:
+
+1. Click **More info**
+2. Click **Run anyway**
+
+Windows remembers the answer for that specific file hash. You won't be asked again.
+
+<br>
+
+**🚫 Option D — Disable SmartScreen (temporary)**
+
+Only if A, B, and C all fail. This is a **system-wide** setting — turn it back on immediately after running the exe.
+
+Windows Security → **App & browser control** → **Reputation-based protection** → toggle **Check apps and files** off → run the exe → toggle it back on.
+
+<br>
+
+---
+
+**🛡️ Antivirus quarantine**
+
+Separate problem from SmartScreen. Defender and other engines may flag the exe as `Trojan:Win32/Wacatac` or similar — **false positive on shape**. A compiled binary that injects a DLL into Chrome and reads credential stores looks identical to an infostealer by static heuristics. That's the tool's nature, not a bug.
+
+Verify the SHA-256 against the release:
+
+```powershell
+Get-FileHash .\phantom_elevator.exe -Algorithm SHA256
+```
+
+If it matches, add **only the folder containing the exe** to your AV exclusion list. Windows Security → **Virus & threat protection** → **Manage settings** → **Exclusions** → **Add an exclusion** → **Folder**.
+
+**Never disable Defender globally.** That's system-wide exposure, and it doesn't fix anything a folder-level exclusion won't.
 
 </details>
 
@@ -506,6 +579,8 @@ Windows 10 and 11 ship UCRT. Windows 8.1 needs KB2999226. Windows 7 unsupported.
 <br>
 
 Expected. A compiled binary that injects a DLL into Chrome and reads credential stores matches trojan heuristics by shape. Verify the SHA-256 against the release, then add the folder to your exclusion list.
+
+See [If Windows blocks the exe](#download) for the full four-method bypass — `Unblock-File`, elevated cmd, GUI, or temporary disable.
 
 </details>
 
@@ -720,7 +795,7 @@ Yes — see the [Releases page](https://github.com/Hidden-Rhythm/abe_bypass/rele
 </details>
 
 <details>
-<summary><b>Can I skip `build_dll.py`?</b></summary>
+<summary><b>Can I skip <code>build_dll.py</code>?</b></summary>
 
 <br>
 
