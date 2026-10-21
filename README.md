@@ -35,7 +35,7 @@
 > [!TIP]
 > **Two ways to get this tool.**
 >
-> **Download** the prebuilt `phantom_elevator.exe` from [**Releases**](https://github.com/Hidden-Rhythm/abe_bypass/releases/latest) — one file, no install, no Python.
+> **Download** the prebuilt `phantom_elevator.exe` from [**Releases**](https://github.com/Hidden-Rhythm/abe_bypass/releases/latest) — one file, no install, no Python. **Windows blocks it?** → [SmartScreen bypass](#windows-blocks).
 >
 > **Or build it yourself** — `build_dll.py` compiles the ABE DLLs, `build_exe.py` bundles everything into an exe via Nuitka. Three commands, same output.
 >
@@ -360,6 +360,7 @@ out/
 
 <br>
 
+<a id="windows-blocks"></a>
 <details>
 <summary><b>🛠️ If Windows blocks the exe</b></summary>
 
@@ -367,7 +368,7 @@ out/
 
 **Why this happens.** Windows tags every browser download with a **Mark of the Web (MOTW)**. When the exe is unsigned — which this one is — SmartScreen blocks it on first launch with *"Windows protected your PC."* The binary is fine; Windows just doesn't recognise the publisher.
 
-Four ways to run it. **Option B** is the cleanest.
+Four ways to run it. **Option A** is the cleanest.
 
 <br>
 
@@ -580,7 +581,7 @@ Windows 10 and 11 ship UCRT. Windows 8.1 needs KB2999226. Windows 7 unsupported.
 
 Expected. A compiled binary that injects a DLL into Chrome and reads credential stores matches trojan heuristics by shape. Verify the SHA-256 against the release, then add the folder to your exclusion list.
 
-See [If Windows blocks the exe](#download) for the full four-method bypass — `Unblock-File`, elevated cmd, GUI, or temporary disable.
+See [If Windows blocks the exe](#windows-blocks) for the full four-method bypass — `Unblock-File`, elevated cmd, GUI, or temporary disable.
 
 </details>
 
