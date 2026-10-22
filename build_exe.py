@@ -1,5 +1,4 @@
-# language: Python, file: build_exe.py
-# checks for Nuitka (fast), installs if missing, prompts for source + dlls, builds exe
+
 import os
 import shutil
 import subprocess
@@ -140,8 +139,7 @@ def main() -> int:
     out_dir = here / "dist"
     out_dir.mkdir(exist_ok=True)
 
-    # Nuitka 4.x: data-dir scan misses .dll on Windows backslash paths.
-    # data-files with glob is reliable for the same set.
+ 
     cmd = [
         sys.executable, "-m", "nuitka",
         "--onefile",
