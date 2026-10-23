@@ -675,7 +675,7 @@ phantom_elevator.exe [OPTIONS]
 
 | Flag | Argument | Default | What it does |
 |:---|:---|:---|:---|
-| `--format` | `tsv` \| `json` \| `csv` \| `txt` | `tsv` | 🗄️ `tsv`/`txt` → plain `.txt`; `csv`/`json` → structured |
+| `--format` | `tsv` \| `json` \| `csv` \| `txt` | `txt` | 🗄️ `tsv`/`txt` → plain `.txt`; `csv`/`json` → structured |
 | `--important` | — | off | 💎 High-value targets only |
 | `--debug-drops` | — | off | 🔍 Skipped-entry breakdown |
 | `--no-color` | — | off | ⚪ Disable ANSI |
